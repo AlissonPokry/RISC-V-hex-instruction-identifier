@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1-Novo\\TrabM1\\TrabM1.csproj": {}
+    "C:\\Users\\CFA02\\Desktop\\Alisson\\TrabM1-Org\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1-Novo\\TrabM1\\TrabM1.csproj": {
+    "C:\\Users\\CFA02\\Desktop\\Alisson\\TrabM1-Org\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1-Novo\\TrabM1\\TrabM1.csproj",
+        "projectUniqueName": "C:\\Users\\CFA02\\Desktop\\Alisson\\TrabM1-Org\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
         "projectName": "TrabM1",
-        "projectPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1-Novo\\TrabM1\\TrabM1.csproj",
-        "packagesPath": "C:\\Users\\Alisson\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1-Novo\\TrabM1\\obj\\",
+        "projectPath": "C:\\Users\\CFA02\\Desktop\\Alisson\\TrabM1-Org\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
+        "packagesPath": "C:\\Users\\CFA02\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\CFA02\\Desktop\\Alisson\\TrabM1-Org\\RISC-V-hex-instruction-identifier\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\Alisson\\AppData\\Roaming\\NuGet\\NuGet.Config"
+          "C:\\Users\\CFA02\\AppData\\Roaming\\NuGet\\NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
