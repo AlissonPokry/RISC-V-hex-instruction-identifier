@@ -57,15 +57,13 @@ void ExibirResumo(Dictionary<string, int> contador) {
 
 void IdentificarInstrucoesBinarias(string caminhoArquivo) {
     // Verifica se o arquivo existe
-    if (!File.Exists(caminhoArquivo))
-    {
+    if (!File.Exists(caminhoArquivo)){
         Console.WriteLine("Arquivo não encontrado.");
         return;
     }
 
     // Dicionário para contar a quantidade de instruções por tipo
-    var contadorInstrucoes = new Dictionary<string, int>
-    {
+    var contadorInstrucoes = new Dictionary<string, int> {
         { "R-Type", 0 },
         { "I-Type", 0 },
         { "S-Type", 0 },
@@ -76,6 +74,9 @@ void IdentificarInstrucoesBinarias(string caminhoArquivo) {
 
     // Lê o arquivo linha por linha
     foreach (var linha in File.ReadLines(caminhoArquivo)) {
+        if (linha == null || linha.Trim() == "") {
+            continue;
+        }
         // Converte cada caractere hexadecimal da linha para binário
         var binarioCompleto = string.Concat(linha.Select(caractere => ConverterHexParaBinario(char.ToUpper(caractere))));
 
