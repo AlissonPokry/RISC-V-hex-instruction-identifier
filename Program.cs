@@ -667,13 +667,13 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
         var bloco = blocos[i];
         
         // Lista de instruções com suas dependências
-        var instrucoes = new List<(string hex, string assembly, int rd, HashSet<int> dependencias)>();
+        var instrucoes = new List<(string hex, string assembly, int rd, HashSet<int> dependencias, int posOriginal)>();
         
         // Primeira passagem: identificar todas as instruções e suas dependências
         for (int j = 0; j < bloco.Count; j++) {
             try {
                 var (hex, assembly, rd, rs1, rs2) = AnalisarInstrucao(bloco[j]);
-                instrucoes.Add((hex, assembly, rd, new HashSet<int> { rs1, rs2 }));
+                instrucoes.Add((hex, assembly, rd, new HashSet<int> { rs1, rs2 }, j));
             }
             catch (Exception) {
                 outputBuilder.AppendLine($"Erro ao analisar instrução {j + 1}");
@@ -681,9 +681,9 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
         }
 
         // Reordenar instruções para minimizar dependências
-        var reordenadas = new List<(string hex, string assembly, bool isNop)>();
+        var reordenadas = new List<(string hex, string assembly, bool isNop, int posOriginal)>();
         var registradoresEmUso = new HashSet<int>();
-        var instrucoesRestantes = new List<(string hex, string assembly, int rd, HashSet<int> dependencias)>(instrucoes);
+        var instrucoesRestantes = new List<(string hex, string assembly, int rd, HashSet<int> dependencias, int posOriginal)>(instrucoes);
 
         while (instrucoesRestantes.Any()) {
             bool encontrouInstrucaoIndependente = false;
@@ -692,7 +692,7 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
             for (int j = 0; j < instrucoesRestantes.Count; j++) {
                 var instrucao = instrucoesRestantes[j];
                 if (!instrucao.dependencias.Overlaps(registradoresEmUso)) {
-                    reordenadas.Add((instrucao.hex, instrucao.assembly, false));
+                    reordenadas.Add((instrucao.hex, instrucao.assembly, false, instrucao.posOriginal));
                     registradoresEmUso.Add(instrucao.rd);
                     instrucoesRestantes.RemoveAt(j);
                     encontrouInstrucaoIndependente = true;
@@ -703,16 +703,10 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
             // Se não encontrou instrução independente, adiciona NOP e pega a próxima da fila
             if (!encontrouInstrucaoIndependente && instrucoesRestantes.Any()) {
                 var proxima = instrucoesRestantes[0];
-                reordenadas.Add(("00000000", $"(NOP) -> Aguardando x{string.Join(",x", proxima.dependencias)} ficar disponível", true));
+                reordenadas.Add(("00000000", $"(NOP) -> Aguardando x{string.Join(",x", proxima.dependencias)} ficar disponível", true, -1));
                 instrucoesRestantes.RemoveAt(0);
-                reordenadas.Add((proxima.hex, proxima.assembly, false));
+                reordenadas.Add((proxima.hex, proxima.assembly, false, proxima.posOriginal));
                 registradoresEmUso.Add(proxima.rd);
-            }
-            
-            // Limpa registradores que não são mais necessários
-            registradoresEmUso.Clear();
-            foreach (var instr in instrucoesRestantes.Take(2)) {
-                registradoresEmUso.Add(instr.rd);
             }
         }
 
@@ -726,11 +720,12 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
         // Exibe a sequência reordenada
         outputBuilder.AppendLine("\nSequência reordenada (com NOPs quando necessário):");
         for (int j = 0; j < reordenadas.Count; j++) {
-            var (hex, assembly, isNop) = reordenadas[j];
+            var (hex, assembly, isNop, posOriginal) = reordenadas[j];
             if (isNop) {
                 outputBuilder.AppendLine($"  {j + 1}. {hex} {assembly}");
             } else {
-                outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly})");
+                var indicadorReordenacao = posOriginal != j ? $" -> [Movida da posição {posOriginal + 1}]" : "";
+                outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly}){indicadorReordenacao}");
             }
         }
         
@@ -775,14 +770,14 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
         var bloco = blocos[i];
         
         // Lista de instruções com suas dependências
-        var instrucoes = new List<(string hex, string assembly, bool isLoad, int rd, HashSet<int> dependencias)>();
+        var instrucoes = new List<(string hex, string assembly, bool isLoad, int rd, HashSet<int> dependencias, int posOriginal)>();
         
         // Primeira passagem: identificar todas as instruções e suas dependências
         for (int j = 0; j < bloco.Count; j++) {
             try {
                 var (hex, assembly, rd, rs1, rs2) = AnalisarInstrucao(bloco[j]);
                 var isLoad = assembly.StartsWith("l");
-                instrucoes.Add((hex, assembly, isLoad, rd, new HashSet<int> { rs1, rs2 }));
+                instrucoes.Add((hex, assembly, isLoad, rd, new HashSet<int> { rs1, rs2 }, j));
             }
             catch (Exception) {
                 outputBuilder.AppendLine($"Erro ao analisar instrução {j + 1}");
@@ -790,9 +785,9 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
         }
 
         // Reordenar instruções considerando forwarding
-        var reordenadas = new List<(string hex, string assembly, bool isNop)>();
+        var reordenadas = new List<(string hex, string assembly, bool isNop, int posOriginal)>();
         var registradoresEmUso = new Dictionary<int, bool>(); // rd -> isLoad
-        var instrucoesRestantes = new List<(string hex, string assembly, bool isLoad, int rd, HashSet<int> dependencias)>(instrucoes);
+        var instrucoesRestantes = new List<(string hex, string assembly, bool isLoad, int rd, HashSet<int> dependencias, int posOriginal)>(instrucoes);
 
         while (instrucoesRestantes.Any()) {
             bool encontrouInstrucaoValida = false;
@@ -805,7 +800,7 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
                 
                 // Se não tem dependência de load ou a dependência não é imediata, pode usar forwarding
                 if (!temDependenciaLoad) {
-                    reordenadas.Add((instrucao.hex, instrucao.assembly, false));
+                    reordenadas.Add((instrucao.hex, instrucao.assembly, false, instrucao.posOriginal));
                     if (registradoresEmUso.ContainsKey(instrucao.rd)) {
                         registradoresEmUso[instrucao.rd] = instrucao.isLoad;
                     } else {
@@ -821,10 +816,10 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
             if (!encontrouInstrucaoValida && instrucoesRestantes.Any()) {
                 var proxima = instrucoesRestantes[0];
                 if (proxima.dependencias.Any(dep => registradoresEmUso.ContainsKey(dep) && registradoresEmUso[dep])) {
-                    reordenadas.Add(("00000000", $"(NOP) -> Aguardando load para x{string.Join(",x", proxima.dependencias.Where(d => registradoresEmUso.ContainsKey(d) && registradoresEmUso[d]))}", true));
+                    reordenadas.Add(("00000000", $"(NOP) -> Aguardando load para x{string.Join(",x", proxima.dependencias.Where(d => registradoresEmUso.ContainsKey(d) && registradoresEmUso[d]))}", true, -1));
                 }
                 instrucoesRestantes.RemoveAt(0);
-                reordenadas.Add((proxima.hex, proxima.assembly, false));
+                reordenadas.Add((proxima.hex, proxima.assembly, false, proxima.posOriginal));
                 registradoresEmUso[proxima.rd] = proxima.isLoad;
             }
 
@@ -847,11 +842,12 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
         // Exibe a sequência reordenada
         outputBuilder.AppendLine("\nSequência com Forwarding + Reordenação:");
         for (int j = 0; j < reordenadas.Count; j++) {
-            var (hex, assembly, isNop) = reordenadas[j];
+            var (hex, assembly, isNop, posOriginal) = reordenadas[j];
             if (isNop) {
                 outputBuilder.AppendLine($"  {j + 1}. {hex} {assembly}");
             } else {
-                outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly})");
+                var indicadorReordenacao = posOriginal != j ? $" -> [Movida da posição {posOriginal + 1}]" : "";
+                outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly}){indicadorReordenacao}");
             }
         }
         

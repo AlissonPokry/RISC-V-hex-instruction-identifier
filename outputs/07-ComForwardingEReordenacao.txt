@@ -37,8 +37,8 @@ Sequência com Forwarding + Reordenação:
   3. ffc98993 (addi)
   4. 0209a283 (lw)
   5. 00000000 (NOP) -> Aguardando load para x5
-  6. 005902b3 (add)
-  7. 0259a823 (sw)
+  6. 005902b3 (add) -> [Movida da posição 5]
+  7. 0259a823 (sw) -> [Movida da posição 6]
 
 Total de NOPs inseridos: 1
 
