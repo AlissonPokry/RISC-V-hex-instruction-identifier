@@ -1,0 +1,133 @@
+=====Com Forwarding=====
+
+=== Bloco 1 ===
+Dependência detectada:
+  Instrução 1 (addi) escreve em x9
+  Instrução 5 (add) lê RS1 (x9)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 3 (addi) escreve em x19
+  Instrução 6 (add) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 4 (addi) escreve em x20
+  Instrução 6 (add) lê RS2 (x20)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 5 (add) escreve em x5
+  Instrução 7 (sub) lê RS1 (x5)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 6 (add) escreve em x6
+  Instrução 7 (sub) lê RS2 (x6)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+
+=== Bloco 2 ===
+Dependência detectada:
+  Instrução 1 (addi) escreve em x18
+  Instrução 5 (add) lê RS1 (x18)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 3 (addi) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 4 (lw) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 6 (sw) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 3 (addi) escreve em x19
+  Instrução 4 (lw) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 3 (addi) escreve em x19
+  Instrução 6 (sw) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 4 (lw) escreve em x5
+  Instrução 5 (add) lê RS2 (x5)
+  Tipo: Load-use hazard (não resolvido por forwarding)
+  Ciclos de espera necessários: 1
+
+Dependência detectada:
+  Instrução 4 (lw) escreve em x5
+  Instrução 6 (sw) lê RS2 (x5)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 5 (add) escreve em x5
+  Instrução 6 (sw) lê RS2 (x5)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+
+=== Bloco 3 ===
+Dependência detectada:
+  Instrução 2 (addi) escreve em x9
+  Instrução 7 (add) lê RS1 (x9)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 3 (addi) escreve em x18
+  Instrução 7 (add) lê RS2 (x18)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 4 (addi) escreve em x19
+  Instrução 6 (beq) lê RS1 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 4 (addi) escreve em x19
+  Instrução 8 (sub) lê RS2 (x19)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 5 (addi) escreve em x20
+  Instrução 6 (beq) lê RS2 (x20)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 6 (beq) escreve em x8
+  Instrução 8 (sub) lê RS1 (x8)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+
+Dependência detectada:
+  Instrução 7 (add) escreve em x8
+  Instrução 8 (sub) lê RS1 (x8)
+  Tipo: ALU-use hazard (resolvido por forwarding)
+  Ciclos de espera necessários: 0
+

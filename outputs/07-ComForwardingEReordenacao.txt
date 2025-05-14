@@ -1,0 +1,68 @@
+=====Com Forwarding + Reordenação=====
+
+=== Bloco 1 ===
+Sequência original:
+  1. 00400493 (addi)
+  2. 00300193 (addi)
+  3. 00200993 (addi)
+  4. 00100A13 (addi)
+  5. 012482B3 (add)
+  6. 01498333 (add)
+  7. 40628433 (sub)
+
+Sequência com Forwarding + Reordenação:
+  1. 00400493 (addi)
+  2. 00300193 (addi)
+  3. 00200993 (addi)
+  4. 00100A13 (addi)
+  5. 012482B3 (add)
+  6. 01498333 (add)
+  7. 40628433 (sub)
+
+Total de NOPs inseridos: 0
+
+
+=== Bloco 2 ===
+Sequência original:
+  1. 00100913 (addi)
+  2. 0fc10997 (auipc)
+  3. ffc98993 (addi)
+  4. 0209a283 (lw)
+  5. 005902b3 (add)
+  6. 0259a823 (sw)
+
+Sequência com Forwarding + Reordenação:
+  1. 00100913 (addi)
+  2. 0fc10997 (auipc)
+  3. ffc98993 (addi)
+  4. 0209a283 (lw)
+  5. 00000000 (NOP) -> Aguardando load para x5
+  6. 005902b3 (add)
+  7. 0259a823 (sw)
+
+Total de NOPs inseridos: 1
+
+
+=== Bloco 3 ===
+Sequência original:
+  1. 00f00413 (addi)
+  2. 00a00493 (addi)
+  3. 01400913 (addi)
+  4. 00100993 (addi)
+  5. 00200a13 (addi)
+  6. 01498463 (beq)
+  7. 01248433 (add)
+  8. 41340433 (sub)
+
+Sequência com Forwarding + Reordenação:
+  1. 00f00413 (addi)
+  2. 00a00493 (addi)
+  3. 01400913 (addi)
+  4. 00100993 (addi)
+  5. 00200a13 (addi)
+  6. 01498463 (beq)
+  7. 01248433 (add)
+  8. 41340433 (sub)
+
+Total de NOPs inseridos: 0
+

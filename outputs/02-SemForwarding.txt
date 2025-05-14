@@ -1,0 +1,112 @@
+=====Sem Forwarding=====
+
+=== Bloco 1 ===
+Hazard sem forwarding detectado:
+  Instrução 1 (addi) escreve em x9
+  Instrução 5 (add) lê RS1 (x9)
+  Ciclos de espera necessários: 8
+
+Hazard sem forwarding detectado:
+  Instrução 3 (addi) escreve em x19
+  Instrução 6 (add) lê RS1 (x19)
+  Ciclos de espera necessários: 6
+
+Hazard sem forwarding detectado:
+  Instrução 4 (addi) escreve em x20
+  Instrução 6 (add) lê RS2 (x20)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 5 (add) escreve em x5
+  Instrução 7 (sub) lê RS1 (x5)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 6 (add) escreve em x6
+  Instrução 7 (sub) lê RS2 (x6)
+  Ciclos de espera necessários: 2
+
+
+=== Bloco 2 ===
+Hazard sem forwarding detectado:
+  Instrução 1 (addi) escreve em x18
+  Instrução 5 (add) lê RS1 (x18)
+  Ciclos de espera necessários: 8
+
+Hazard sem forwarding detectado:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 3 (addi) lê RS1 (x19)
+  Ciclos de espera necessários: 2
+
+Hazard sem forwarding detectado:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 4 (lw) lê RS1 (x19)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 6 (sw) lê RS1 (x19)
+  Ciclos de espera necessários: 8
+
+Hazard sem forwarding detectado:
+  Instrução 3 (addi) escreve em x19
+  Instrução 4 (lw) lê RS1 (x19)
+  Ciclos de espera necessários: 2
+
+Hazard sem forwarding detectado:
+  Instrução 3 (addi) escreve em x19
+  Instrução 6 (sw) lê RS1 (x19)
+  Ciclos de espera necessários: 6
+
+Hazard sem forwarding detectado:
+  Instrução 4 (lw) escreve em x5
+  Instrução 5 (add) lê RS2 (x5)
+  Ciclos de espera necessários: 2
+
+Hazard sem forwarding detectado:
+  Instrução 4 (lw) escreve em x5
+  Instrução 6 (sw) lê RS2 (x5)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 5 (add) escreve em x5
+  Instrução 6 (sw) lê RS2 (x5)
+  Ciclos de espera necessários: 2
+
+
+=== Bloco 3 ===
+Hazard sem forwarding detectado:
+  Instrução 2 (addi) escreve em x9
+  Instrução 7 (add) lê RS1 (x9)
+  Ciclos de espera necessários: 10
+
+Hazard sem forwarding detectado:
+  Instrução 3 (addi) escreve em x18
+  Instrução 7 (add) lê RS2 (x18)
+  Ciclos de espera necessários: 8
+
+Hazard sem forwarding detectado:
+  Instrução 4 (addi) escreve em x19
+  Instrução 6 (beq) lê RS1 (x19)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 4 (addi) escreve em x19
+  Instrução 8 (sub) lê RS2 (x19)
+  Ciclos de espera necessários: 8
+
+Hazard sem forwarding detectado:
+  Instrução 5 (addi) escreve em x20
+  Instrução 6 (beq) lê RS2 (x20)
+  Ciclos de espera necessários: 2
+
+Hazard sem forwarding detectado:
+  Instrução 6 (beq) escreve em x8
+  Instrução 8 (sub) lê RS1 (x8)
+  Ciclos de espera necessários: 4
+
+Hazard sem forwarding detectado:
+  Instrução 7 (add) escreve em x8
+  Instrução 8 (sub) lê RS1 (x8)
+  Ciclos de espera necessários: 2
+

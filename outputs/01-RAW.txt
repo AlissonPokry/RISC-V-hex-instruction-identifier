@@ -1,0 +1,41 @@
+=====RAW Hazard=====
+
+=== Bloco 1 ===
+RAW Hazard detectado:
+  Instrução 4 (addi) escreve em x20
+  Instrução 6 (add) lê RS2 (x20)
+
+RAW Hazard detectado:
+  Instrução 5 (add) escreve em x5
+  Instrução 7 (sub) lê RS1 (x5)
+
+
+=== Bloco 2 ===
+RAW Hazard detectado:
+  Instrução 2 (auipc) escreve em x19
+  Instrução 3 (addi) lê RS1 (x19)
+  Instrução 4 (lw) lê RS1 (x19)
+
+RAW Hazard detectado:
+  Instrução 3 (addi) escreve em x19
+  Instrução 4 (lw) lê RS1 (x19)
+
+RAW Hazard detectado:
+  Instrução 4 (lw) escreve em x5
+  Instrução 5 (add) lê RS2 (x5)
+  Instrução 6 (sw) lê RS2 (x5)
+
+
+=== Bloco 3 ===
+RAW Hazard detectado:
+  Instrução 4 (addi) escreve em x19
+  Instrução 6 (beq) lê RS1 (x19)
+
+RAW Hazard detectado:
+  Instrução 5 (addi) escreve em x20
+  Instrução 6 (beq) lê RS2 (x20)
+
+RAW Hazard detectado:
+  Instrução 6 (beq) escreve em x8
+  Instrução 8 (sub) lê RS1 (x8)
+

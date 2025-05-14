@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {}
+    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM2\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {
+    "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM2\\RISC-V-hex-instruction-identifier\\TrabM1.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
+        "projectUniqueName": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM2\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
         "projectName": "TrabM1",
-        "projectPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
+        "projectPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM2\\RISC-V-hex-instruction-identifier\\TrabM1.csproj",
         "packagesPath": "C:\\Users\\Alisson\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM1\\RISC-V-hex-instruction-identifier\\obj\\",
+        "outputPath": "C:\\Users\\Alisson\\OneDrive\\Desktop\\Faculdade\\7 período\\Organização de computadores\\TrabalhoM2\\RISC-V-hex-instruction-identifier\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\Alisson\\AppData\\Roaming\\NuGet\\NuGet.Config"
