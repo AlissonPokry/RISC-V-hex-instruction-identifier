@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("TrabM1")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2830e1fd7753a84654bf30035245ccb31d170fcf")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3ed29c1b7f3694a3b70e45c403ee286df0385ca0")]
 [assembly: System.Reflection.AssemblyProductAttribute("TrabM1")]
 [assembly: System.Reflection.AssemblyTitleAttribute("TrabM1")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

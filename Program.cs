@@ -299,6 +299,12 @@ void AnalisarRAWHazard(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "01-RAW.txt");
+
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    Console.WriteLine($"\n=== Sobrecusto da Análise RAW ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: 0 (Apenas análise)");
+    Console.WriteLine($"Sobrecusto: 0%");
 }
 
 void AnalisarHazardSemForwarding(string caminhoArquivo) {
@@ -370,6 +376,26 @@ void AnalisarHazardSemForwarding(string caminhoArquivo) {
 
     // Escreve o resultado em um arquivo
     EscreverArquivo(outputBuilder.ToString(), "02-SemForwarding.txt");
+
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        var nops = 0;
+        for (int j = 0; j < bloco.Count - 1; j++) {
+            var instrucaoAtual = AnalisarInstrucao(bloco[j]);
+            if (j + 1 < bloco.Count) {
+                var instrucaoSeguinte = AnalisarInstrucao(bloco[j + 1]);
+                if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd) {
+                    nops += 2; // 2 ciclos de espera necessários
+                }
+            }
+        }
+        return nops;
+    });
+
+    Console.WriteLine($"\n=== Sobrecusto Sem Forwarding ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardComForwarding(string caminhoArquivo) {
@@ -450,6 +476,26 @@ void AnalisarHazardComForwarding(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "03-ComForwarding.txt");
+
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        var nops = 0;
+        for (int j = 0; j < bloco.Count - 1; j++) {
+            var instrucaoAtual = AnalisarInstrucao(bloco[j]);
+            if (instrucaoAtual.assembly.StartsWith("l") && j + 1 < bloco.Count) {
+                var instrucaoSeguinte = AnalisarInstrucao(bloco[j + 1]);
+                if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd) {
+                    nops++; // 1 ciclo apenas para load-use hazards
+                }
+            }
+        }
+        return nops;
+    });
+
+    Console.WriteLine($"\n=== Sobrecusto Com Forwarding ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardComNOP(string caminhoArquivo) {
@@ -539,7 +585,30 @@ void AnalisarHazardComNOP(string caminhoArquivo) {
         outputBuilder.AppendLine();
     }
 
+    // Calcular o sobrecusto total
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        // Conta NOPs necessários para cada instrução no bloco
+        var nops = 0;
+        for (int j = 0; j < bloco.Count - 1; j++) {
+            var instrucaoAtual = AnalisarInstrucao(bloco[j]);
+            if (j + 1 < bloco.Count) {
+                var instrucaoSeguinte = AnalisarInstrucao(bloco[j + 1]);
+                if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd) {
+                    nops += instrucaoAtual.assembly.StartsWith("l") ? 1 : 2;
+                }
+            }
+        }
+        return nops;
+    });
+    
     EscreverArquivo(outputBuilder.ToString(), "04-ComNOPs.txt");
+
+    Console.WriteLine($"\n=== Sobrecusto Com NOPs ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
+
 }
 
 void AnalisarHazardComForwardingENOP(string caminhoArquivo) {
@@ -588,19 +657,20 @@ void AnalisarHazardComForwardingENOP(string caminhoArquivo) {
                 if (j + 1 < bloco.Count) {
                     var instrucaoSeguinte = string.Concat(bloco[j + 1].Select(c => ConverterHexParaBinario(char.ToUpper(c))));
                     var camposSeguinte = SepararCamposInstrucao(instrucaoSeguinte);
-                    var instrucaoAssemblySeguinte = IdentificarInstrucaoAssembly(camposSeguinte.opcode, camposSeguinte.funct3, camposSeguinte.funct7);
                     int rs1Seguinte = Convert.ToInt32(camposSeguinte.rs1, 2);
                     int rs2Seguinte = Convert.ToInt32(camposSeguinte.rs2, 2);
 
-                    bool isLoad = instrucaoAssemblyAtual.StartsWith("l");
                     bool hazardImediato = rs1Seguinte == rdAtual || rs2Seguinte == rdAtual;
 
-                    if (isLoad && hazardImediato) {
-                        // Adiciona 1 NOP apenas para load-use hazard, já que forwarding resolve os outros casos
-                        novaSequencia.Add(("00000000", $"(NOP) -> Forwarding não resolve load-use hazard: {instrucaoAssemblyAtual} -> {instrucaoAssemblySeguinte}", true));
-                        outputBuilder.AppendLine($"Load-use hazard detectado:");
-                        outputBuilder.AppendLine($"  {instrucaoAssemblyAtual} -> {instrucaoAssemblySeguinte}");
-                        outputBuilder.AppendLine($"  Inserido 1 NOP pois forwarding não resolve dependência de load\n");
+                    if (hazardImediato) {
+                        bool isLoad = instrucaoAssemblyAtual.StartsWith("l");
+
+                        if (isLoad) {
+                            novaSequencia.Add(("00000000", $"(NOP) -> Load {instrucaoAssemblyAtual} precisa de 1 ciclo para buscar x{rdAtual} da memória", true));
+                        } else {
+                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 1/2)", true));
+                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 2/2)", true));
+                        }
                     }
                 }
             }
@@ -630,7 +700,26 @@ void AnalisarHazardComForwardingENOP(string caminhoArquivo) {
         outputBuilder.AppendLine();
     }
 
-    EscreverArquivo(outputBuilder.ToString(), "05-ComForwardingENOPs.txt");
+    // Calcular e exibir sobrecusto
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        var nops = 0;
+        for (int j = 0; j < bloco.Count - 1; j++) {
+            var instrucaoAtual = AnalisarInstrucao(bloco[j]);
+            if (instrucaoAtual.assembly.StartsWith("l") && j + 1 < bloco.Count) {
+                var instrucaoSeguinte = AnalisarInstrucao(bloco[j + 1]);
+                if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd) {
+                    nops++; // 1 ciclo apenas para load-use hazards
+                }
+            }
+        }
+        return nops;
+    });
+
+    Console.WriteLine($"\n=== Sobrecusto Com Forwarding e NOPs ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardComReordenacao(string caminhoArquivo) {
@@ -662,9 +751,14 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
     }
 
     // Analisar cada bloco
+    int totalInstrucoes = 0;
+    int totalNops = 0;
+    int totalReordenadas = 0;
+
     for (int i = 0; i < blocos.Count; i++) {
         outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
         var bloco = blocos[i];
+        totalInstrucoes += bloco.Count;
         
         // Lista de instruções com suas dependências
         var instrucoes = new List<(string hex, string assembly, int rd, HashSet<int> dependencias, int posOriginal)>();
@@ -692,6 +786,7 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
             for (int j = 0; j < instrucoesRestantes.Count; j++) {
                 var instrucao = instrucoesRestantes[j];
                 if (!instrucao.dependencias.Overlaps(registradoresEmUso)) {
+                    if (reordenadas.Count != instrucao.posOriginal) totalReordenadas++;
                     reordenadas.Add((instrucao.hex, instrucao.assembly, false, instrucao.posOriginal));
                     registradoresEmUso.Add(instrucao.rd);
                     instrucoesRestantes.RemoveAt(j);
@@ -702,8 +797,9 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
 
             // Se não encontrou instrução independente, adiciona NOP e pega a próxima da fila
             if (!encontrouInstrucaoIndependente && instrucoesRestantes.Any()) {
+                totalNops++;
+                reordenadas.Add(("00000000", $"(NOP) -> Aguardando x{string.Join(",x", instrucoesRestantes[0].dependencias)} ficar disponível", true, -1));
                 var proxima = instrucoesRestantes[0];
-                reordenadas.Add(("00000000", $"(NOP) -> Aguardando x{string.Join(",x", proxima.dependencias)} ficar disponível", true, -1));
                 instrucoesRestantes.RemoveAt(0);
                 reordenadas.Add((proxima.hex, proxima.assembly, false, proxima.posOriginal));
                 registradoresEmUso.Add(proxima.rd);
@@ -734,6 +830,12 @@ void AnalisarHazardComReordenacao(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "06-ComReordenacao.txt");
+
+    Console.WriteLine($"\n=== Sobrecusto Com Reordenação ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Instruções reordenadas: {totalReordenadas}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
@@ -765,9 +867,15 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
     }
 
     // Analisar cada bloco
+    int totalInstrucoes = 0;
+    int totalNops = 0;
+    int totalReordenadas = 0;
+
+    // Analisar cada bloco
     for (int i = 0; i < blocos.Count; i++) {
         outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
         var bloco = blocos[i];
+        totalInstrucoes += bloco.Count;
         
         // Lista de instruções com suas dependências
         var instrucoes = new List<(string hex, string assembly, bool isLoad, int rd, HashSet<int> dependencias, int posOriginal)>();
@@ -798,8 +906,8 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
                 bool temDependenciaLoad = instrucao.dependencias.Any(dep => 
                     registradoresEmUso.ContainsKey(dep) && registradoresEmUso[dep]);
                 
-                // Se não tem dependência de load ou a dependência não é imediata, pode usar forwarding
                 if (!temDependenciaLoad) {
+                    if (reordenadas.Count != instrucao.posOriginal) totalReordenadas++;
                     reordenadas.Add((instrucao.hex, instrucao.assembly, false, instrucao.posOriginal));
                     if (registradoresEmUso.ContainsKey(instrucao.rd)) {
                         registradoresEmUso[instrucao.rd] = instrucao.isLoad;
@@ -816,6 +924,7 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
             if (!encontrouInstrucaoValida && instrucoesRestantes.Any()) {
                 var proxima = instrucoesRestantes[0];
                 if (proxima.dependencias.Any(dep => registradoresEmUso.ContainsKey(dep) && registradoresEmUso[dep])) {
+                    totalNops++;
                     reordenadas.Add(("00000000", $"(NOP) -> Aguardando load para x{string.Join(",x", proxima.dependencias.Where(d => registradoresEmUso.ContainsKey(d) && registradoresEmUso[d]))}", true, -1));
                 }
                 instrucoesRestantes.RemoveAt(0);
@@ -839,7 +948,7 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
             outputBuilder.AppendLine($"  {j + 1}. {bloco[j]} ({assembly})");
         }
 
-        // Exibe a sequência reordenada
+        // Exibe a sequência com Forwarding + Reordenação:
         outputBuilder.AppendLine("\nSequência com Forwarding + Reordenação:");
         for (int j = 0; j < reordenadas.Count; j++) {
             var (hex, assembly, isNop, posOriginal) = reordenadas[j];
@@ -856,6 +965,12 @@ void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "07-ComForwardingEReordenacao.txt");
+
+    Console.WriteLine($"\n=== Sobrecusto Com Forwarding e Reordenação ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Instruções reordenadas: {totalReordenadas}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardDeControle(string caminhoArquivo) {
@@ -943,6 +1058,22 @@ void AnalisarHazardDeControle(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "08-HazardsDeControle.txt");
+
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        var nops = 0;
+        foreach (var linha in bloco) {
+            var instrucao = AnalisarInstrucao(linha);
+            if (instrucao.assembly.StartsWith("j")) nops += 1;
+            else if (instrucao.assembly.StartsWith("b")) nops += 2;
+        }
+        return nops;
+    });
+
+    Console.WriteLine($"\n=== Sobrecusto Hazards de Controle ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
 }
 
 void AnalisarHazardComDelayedBranch(string caminhoArquivo) {
@@ -1042,6 +1173,31 @@ void AnalisarHazardComDelayedBranch(string caminhoArquivo) {
     }
 
     EscreverArquivo(outputBuilder.ToString(), "09-DelayedBranch.txt");
+
+    int totalInstrucoes = blocos.Sum(b => b.Count);
+    int totalNops = blocos.Sum(bloco => {
+        var nops = 0;
+        for (int j = 0; j < bloco.Count; j++) {
+            var instrucao = AnalisarInstrucao(bloco[j]);
+            if ((instrucao.assembly.StartsWith("b") || instrucao.assembly.StartsWith("j")) &&
+                (j + 1 >= bloco.Count || !PodeExecutarNoSlotDeAtraso(instrucao, AnalisarInstrucao(bloco[j + 1])))) {
+                nops++;
+            }
+        }
+        return nops;
+    });
+
+    Console.WriteLine($"\n=== Sobrecusto Com Delayed Branch ===");
+    Console.WriteLine($"Total de instruções originais: {totalInstrucoes}");
+    Console.WriteLine($"NOPs necessários: {totalNops}");
+    Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
+    Console.WriteLine($"Instruções reordenadas: {totalInstrucoes - totalNops}");
+}
+
+bool PodeExecutarNoSlotDeAtraso((string hex, string assembly, int rd, int rs1, int rs2) branch, 
+                               (string hex, string assembly, int rd, int rs1, int rs2) proxima) {
+    // Verifica se a próxima instrução não depende do branch
+    return proxima.rs1 != branch.rd && proxima.rs2 != branch.rd;
 }
 
 // Chama as funções principais para processar o arquivo
