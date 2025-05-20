@@ -1,41 +1,71 @@
 =====RAW Hazard=====
 
 === Bloco 1 ===
-RAW Hazard detectado:
-  Instrução 4 (addi) escreve em x20
-  Instrução 6 (add) lê RS2 (x20)
+Sequência original:
+  1. 00400493 (addi)
+  2. 00300193 (addi)
+  3. 00200993 (addi)
+  4. 00100A13 (addi)
+  5. 012482B3 (add)
+  6. 01498333 (add)
+  7. 40628433 (sub)
 
-RAW Hazard detectado:
-  Instrução 5 (add) escreve em x5
-  Instrução 7 (sub) lê RS1 (x5)
-
+Sequência modificada:
+  1. 00400493 (addi)
+  2. 00300193 (addi)
+  3. 00200993 (addi)
+  4. 00100A13 (addi)
+  5. 012482B3 (add)
+  6. 01498333 (add)
+  7. 00000000 (nop) -> Ciclo de espera 1/2
+  8. 00000000 (nop) -> Ciclo de espera 2/2
+  9. 40628433 (sub)
 
 === Bloco 2 ===
-RAW Hazard detectado:
-  Instrução 2 (auipc) escreve em x19
-  Instrução 3 (addi) lê RS1 (x19)
-  Instrução 4 (lw) lê RS1 (x19)
+Sequência original:
+  1. 00100913 (addi)
+  2. 0fc10997 (auipc)
+  3. ffc98993 (addi)
+  4. 0209a283 (lw)
+  5. 005902b3 (add)
+  6. 0259a823 (sw)
 
-RAW Hazard detectado:
-  Instrução 3 (addi) escreve em x19
-  Instrução 4 (lw) lê RS1 (x19)
-
-RAW Hazard detectado:
-  Instrução 4 (lw) escreve em x5
-  Instrução 5 (add) lê RS2 (x5)
-  Instrução 6 (sw) lê RS2 (x5)
-
+Sequência modificada:
+  1. 00100913 (addi)
+  2. 0fc10997 (auipc)
+  3. 00000000 (nop) -> Ciclo de espera 1/2
+  4. 00000000 (nop) -> Ciclo de espera 2/2
+  5. ffc98993 (addi)
+  6. 00000000 (nop) -> Ciclo de espera 1/2
+  7. 00000000 (nop) -> Ciclo de espera 2/2
+  8. 0209a283 (lw)
+  9. 00000000 (nop) -> Load-use hazard
+  10. 005902b3 (add)
+  11. 00000000 (nop) -> Ciclo de espera 1/2
+  12. 00000000 (nop) -> Ciclo de espera 2/2
+  13. 0259a823 (sw)
 
 === Bloco 3 ===
-RAW Hazard detectado:
-  Instrução 4 (addi) escreve em x19
-  Instrução 6 (beq) lê RS1 (x19)
+Sequência original:
+  1. 00f00413 (addi)
+  2. 00a00493 (addi)
+  3. 01400913 (addi)
+  4. 00100993 (addi)
+  5. 00200a13 (addi)
+  6. 01498463 (beq)
+  7. 01248433 (add)
+  8. 41340433 (sub)
 
-RAW Hazard detectado:
-  Instrução 5 (addi) escreve em x20
-  Instrução 6 (beq) lê RS2 (x20)
-
-RAW Hazard detectado:
-  Instrução 6 (beq) escreve em x8
-  Instrução 8 (sub) lê RS1 (x8)
-
+Sequência modificada:
+  1. 00f00413 (addi)
+  2. 00a00493 (addi)
+  3. 01400913 (addi)
+  4. 00100993 (addi)
+  5. 00200a13 (addi)
+  6. 00000000 (nop) -> Ciclo de espera 1/2
+  7. 00000000 (nop) -> Ciclo de espera 2/2
+  8. 01498463 (beq)
+  9. 01248433 (add)
+  10. 00000000 (nop) -> Ciclo de espera 1/2
+  11. 00000000 (nop) -> Ciclo de espera 2/2
+  12. 41340433 (sub)

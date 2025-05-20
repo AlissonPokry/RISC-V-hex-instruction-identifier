@@ -1,4 +1,4 @@
-=====Com Reordenação de Instruções=====
+=====Com Reordenação=====
 
 === Bloco 1 ===
 Sequência original:
