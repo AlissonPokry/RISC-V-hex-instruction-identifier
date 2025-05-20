@@ -320,37 +320,34 @@ public class HazardAnalysis
         var outputBuilder = resultado.Value.outputBuilder;
         var blocos = resultado.Value.blocos;
 
-        // Analisar cada bloco
         for (int i = 0; i < blocos.Count; i++)
         {
             outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
             var bloco = blocos[i];
+
             var novaSequencia = new List<(string hex, string assembly, bool isNop)>();
 
             for (int j = 0; j < bloco.Count; j++)
             {
                 try
                 {
-                    var instrucaoAtual = string.Concat(bloco[j].Select(c => aux.ConverterHexParaBinario(char.ToUpper(c))));
-                    var camposAtual = aux.SepararCamposInstrucao(instrucaoAtual);
-                    var instrucaoAssemblyAtual = aux.IdentificarInstrucaoAssembly(camposAtual.opcode, camposAtual.funct3, camposAtual.funct7);
-                    int rdAtual = Convert.ToInt32(camposAtual.rd, 2);
+                    var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
+                    novaSequencia.Add((bloco[j], instrucaoAtual.assembly, false));
 
-                    novaSequencia.Add((bloco[j], instrucaoAssemblyAtual, false));
-
+                    // Verifica se há dependência com a próxima instrução
                     if (j + 1 < bloco.Count)
                     {
-                        var instrucaoSeguinte = string.Concat(bloco[j + 1].Select(c => aux.ConverterHexParaBinario(char.ToUpper(c))));
-                        var camposSeguinte = aux.SepararCamposInstrucao(instrucaoSeguinte);
-                        int rs1Seguinte = Convert.ToInt32(camposSeguinte.rs1, 2);
-                        int rs2Seguinte = Convert.ToInt32(camposSeguinte.rs2, 2);
+                        var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
+                        bool temDependencia = instrucaoSeguinte.rs1 == instrucaoAtual.rd || 
+                                            instrucaoSeguinte.rs2 == instrucaoAtual.rd;
+                        bool isLoad = instrucaoAtual.assembly.StartsWith("l");
 
-                        bool isLoad = instrucaoAssemblyAtual.StartsWith("l");
-
-                        if (rs1Seguinte == rdAtual || rs2Seguinte == rdAtual)
+                        // Insere NOP apenas se for load-use hazard
+                        if (temDependencia && isLoad)
                         {
-                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 1/2)", true));
-                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 2/2)", true));
+                            novaSequencia.Add(("00000000", 
+                                $"(NOP) -> Load {instrucaoAtual.assembly} precisa de 1 ciclo para buscar x{instrucaoAtual.rd} da memória", 
+                                true));
                         }
                     }
                 }
@@ -361,28 +358,18 @@ public class HazardAnalysis
             }
 
             // Exibe a sequência original
-            outputBuilder.AppendLine("Sequência original:");
-            for (int j = 0; j < bloco.Count; j++)
-            {
-                var (_, assembly, _, _, _) = aux.AnalisarInstrucao(bloco[j]);
-                outputBuilder.AppendLine($"  {j + 1}. {bloco[j]} ({assembly})");
-            }
+            aux.ExibirSequenciaOriginal(bloco, outputBuilder);
 
             // Exibe a sequência com Forwarding + NOPs
             outputBuilder.AppendLine("\nSequência com Forwarding + NOPs:");
             for (int j = 0; j < novaSequencia.Count; j++)
             {
                 var (hex, assembly, isNop) = novaSequencia[j];
-                if (isNop)
-                {
-                    outputBuilder.AppendLine($"  {j + 1}. {hex} {assembly}");
-                }
-                else
-                {
-                    outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly})");
-                }
+                outputBuilder.AppendLine($"  {j + 1}. {hex} {(isNop ? assembly : $"({assembly})")}");
             }
-            outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {novaSequencia.Count(x => x.isNop)}");
+
+            int nopsInseridos = novaSequencia.Count(x => x.isNop);
+            outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {nopsInseridos}");
             outputBuilder.AppendLine();
         }
 
@@ -394,12 +381,16 @@ public class HazardAnalysis
             for (int j = 0; j < bloco.Count - 1; j++)
             {
                 var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
-                if (instrucaoAtual.assembly.StartsWith("l") && j + 1 < bloco.Count)
+                if (j + 1 < bloco.Count)
                 {
                     var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
-                    if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd)
+                    bool temDependencia = instrucaoSeguinte.rs1 == instrucaoAtual.rd || 
+                                        instrucaoSeguinte.rs2 == instrucaoAtual.rd;
+                    bool isLoad = instrucaoAtual.assembly.StartsWith("l");
+
+                    if (temDependencia && isLoad)
                     {
-                        nops++; // 1 ciclo apenas para load-use hazards
+                        nops++; // Apenas 1 NOP para load-use hazards
                     }
                 }
             }
@@ -407,7 +398,6 @@ public class HazardAnalysis
         });
 
         aux.EscreverArquivo(outputBuilder.ToString(), "05-ComForwardingENOPs.txt");
-
         aux.ExibirSobrecusto("Com Forwarding + NOPs", totalInstrucoes, totalNops);
     }
 
