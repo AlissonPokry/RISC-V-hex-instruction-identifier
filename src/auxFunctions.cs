@@ -322,21 +322,21 @@ public class auxFunctions
     }
 
     public (StringBuilder outputBuilder, List<List<string>> blocos)? InicializarArquivo(string caminhoArquivo, string titulo)
-{
-    if (!File.Exists(caminhoArquivo))
     {
-        Console.WriteLine("Arquivo não encontrado.");
-        return null;
+        if (!File.Exists(caminhoArquivo))
+        {
+            Console.WriteLine("Arquivo não encontrado.");
+            return null;
+        }
+
+        var outputBuilder = new StringBuilder();
+        outputBuilder.AppendLine($"====={titulo}=====");
+
+        var blocos = SepararEmBlocos(caminhoArquivo);
+        if (!blocos.Any()) return null;
+
+        return (outputBuilder, blocos);
     }
-
-    var outputBuilder = new StringBuilder();
-    outputBuilder.AppendLine($"====={titulo}=====");
-
-    var blocos = SepararEmBlocos(caminhoArquivo);
-    if (!blocos.Any()) return null;
-
-    return (outputBuilder, blocos);
-}
 
     public void ReportarHazardRAW(StringBuilder sb, int posAtual, string instrAtual, int rd,
         string instrSeguinte, int[] rsSeguinte, bool[] hazards)
@@ -350,5 +350,15 @@ public class auxFunctions
                 (hazards[1] ? $"{(hazards[0] ? " e " : "")}RS2 (x{rsSeguinte[1]})" : ""));
             sb.AppendLine();
         }
+    }
+    
+    public (StringBuilder outputBuilder, List<List<string>> blocos, int totalInstrucoes) InitializeAnalysis(
+        string caminhoArquivo, string titulo)
+    {
+        var outputBuilder = new StringBuilder();
+        outputBuilder.AppendLine($"====={titulo}=====");
+        var blocos = SepararEmBlocos(caminhoArquivo);
+        var totalInstrucoes = blocos.Sum(b => b.Count);
+        return (outputBuilder, blocos, totalInstrucoes);
     }
 }

@@ -1,19 +1,11 @@
 using System.Text;
 
+// Classe responsável pela análise de diferentes tipos de hazards em instruções RISC-V
 public class HazardAnalysis
 {
     private readonly auxFunctions aux = new auxFunctions();
 
-    private (StringBuilder outputBuilder, List<List<string>> blocos, int totalInstrucoes) InitializeAnalysis(
-        string caminhoArquivo, string titulo)
-    {
-        var outputBuilder = new StringBuilder();
-        outputBuilder.AppendLine($"====={titulo}=====");
-        var blocos = aux.SepararEmBlocos(caminhoArquivo);
-        var totalInstrucoes = blocos.Sum(b => b.Count);
-        return (outputBuilder, blocos, totalInstrucoes);
-    }
-
+    // Exibe as sequências de instruções antes e depois da análise de hazards
     private void ExibirSequencias(StringBuilder outputBuilder, List<string> bloco, 
         IEnumerable<(string hex, string assembly, string comentario)> novaSequencia)
     {
@@ -38,6 +30,8 @@ public class HazardAnalysis
         }
     }
 
+    // Processa as instruções do bloco, inserindo NOPs quando necessário
+    // avaliarDependencia: função que determina se existe dependência entre instruções
     private List<(string hex, string assembly, string comentario)> ProcessarInstrucoes(
         List<string> bloco, Func<(string hex, string assembly, int rd, int rs1, int rs2), int, bool> avaliarDependencia)
     {
@@ -72,9 +66,11 @@ public class HazardAnalysis
         return resultado;
     }
 
+    // Detecta hazards do tipo Read After Write (RAW)
+    // Identifica quando uma instrução tenta ler um registrador antes que seu valor seja escrito
     public void AnalisarRAWHazard(string caminhoArquivo)
     {
-        var (outputBuilder, blocos, totalInstrucoes) = InitializeAnalysis(caminhoArquivo, "RAW Hazard");
+        var (outputBuilder, blocos, totalInstrucoes) = aux.InitializeAnalysis(caminhoArquivo, "RAW Hazard");
         if (!blocos.Any()) return;
 
         foreach (var (bloco, i) in blocos.Select((b, i) => (b, i)))
@@ -91,6 +87,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Análise RAW", totalInstrucoes, 0);
     }
 
+    // Analisa hazards sem utilizar forwarding
+    // Requer ciclos completos de espera entre instruções dependentes
     public void AnalisarHazardSemForwarding(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Sem Forwarding");
@@ -163,6 +161,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Sem Forwarding", totalInstrucoes, totalNops);
     }
 
+    // Analisa hazards utilizando técnica de forwarding
+    // Permite reduzir ciclos de espera encaminhando resultados entre estágios do pipeline
     public void AnalisarHazardComForwarding(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding");
@@ -247,6 +247,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Com Forwarding", totalInstrucoes, totalNops);
     }
 
+    // Analisa hazards inserindo instruções NOP explicitamente
+    // Adiciona NOPs para garantir a correta execução das instruções dependentes
     public void AnalisarHazardComNOP(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com NOPs");
@@ -355,6 +357,8 @@ public class HazardAnalysis
 
     }
 
+    // Combina forwarding com inserção de NOPs
+    // Usa forwarding quando possível e insere NOPs apenas quando necessário
     public void AnalisarHazardComForwardingENOP(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding + NOPs");
@@ -452,6 +456,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Com Forwarding + NOPs", totalInstrucoes, totalNops);
     }
 
+    // Reordena instruções para minimizar hazards
+    // Tenta reorganizar a sequência de instruções para reduzir dependências
     public void AnalisarHazardComReordenacao(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Reordenação");
@@ -557,6 +563,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Com Reordenação", totalInstrucoes, totalNops);
     }
 
+    // Combina forwarding com reordenação de instruções
+    // Utiliza ambas as técnicas para otimizar o pipeline e reduzir dependências
     public void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding + Reordenação");
@@ -686,6 +694,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Com Forwarding + Reordenação", totalInstrucoes, totalNops);
     }
 
+    // Analisa hazards causados por instruções de controle (branches e jumps)
+    // Insere NOPs para garantir correta execução de desvios
     public void AnalisarHazardDeControle(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Hazards de Controle");
@@ -779,6 +789,8 @@ public class HazardAnalysis
         aux.ExibirSobrecusto("Hazards de controle", totalInstrucoes, totalNops);
     }
 
+    // Implementa a técnica de delayed branch
+    // Tenta preencher o slot de atraso com instruções úteis ou NOPs
     public void AnalisarHazardComDelayedBranch(string caminhoArquivo)
     {
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Delayed Branch");
