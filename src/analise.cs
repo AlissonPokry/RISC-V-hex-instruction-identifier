@@ -14,20 +14,69 @@ public class HazardAnalysis
 
         var outputBuilder = resultado.Value.outputBuilder;
         var blocos = resultado.Value.blocos;
-        var totalInstrucoes = blocos.Sum(b => b.Count);
 
-        foreach (var (bloco, i) in blocos.Select((b, i) => (b, i)))
+        for (int i = 0; i < blocos.Count; i++)
         {
             outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
-            
-            var sequencia = aux.ProcessarInstrucoes(bloco, (instrucao, j) => 
-                j + 1 < bloco.Count && (aux.AnalisarInstrucao(bloco[j + 1]).rs1 == instrucao.rd || aux.AnalisarInstrucao(bloco[j + 1]).rs2 == instrucao.rd));
-                
-            aux.ExibirSequencias(outputBuilder, bloco, sequencia);
+            var bloco = blocos[i];
+
+            // Exibe a sequência original
+            aux.ExibirSequenciaOriginal(bloco, outputBuilder);
+            outputBuilder.AppendLine("\nDependências detectadas:");
+
+            for (int j = 0; j < bloco.Count - 1; j++)
+            {
+                try
+                {
+                    var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
+                    int rdAtual = instrucaoAtual.rd;
+
+                    // Verificar apenas as próximas duas instruções
+                    int limite = Math.Min(j + 3, bloco.Count);
+                    for (int k = j + 1; k < limite; k++)
+                    {
+                        var instrucaoFutura = aux.AnalisarInstrucao(bloco[k]);
+                        if (instrucaoFutura.rs1 == rdAtual || instrucaoFutura.rs2 == rdAtual)
+                        {
+                            outputBuilder.AppendLine($"  Instrução {j + 1} ({instrucaoAtual.assembly}) escreve em x{rdAtual}");
+                            outputBuilder.AppendLine($"  Instrução {k + 1} ({instrucaoFutura.assembly}) lê " +
+                                (instrucaoFutura.rs1 == rdAtual ? $"RS1 (x{instrucaoFutura.rs1})" : "") +
+                                (instrucaoFutura.rs2 == rdAtual ? $"{(instrucaoFutura.rs1 == rdAtual ? " e " : "")}RS2 (x{instrucaoFutura.rs2})" : ""));
+                            outputBuilder.AppendLine($"  Ciclos de espera necessários: {(k - j) * 2}");
+                            outputBuilder.AppendLine();
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    outputBuilder.AppendLine($"Erro ao analisar instrução {j + 1}");
+                }
+            }
         }
 
         aux.EscreverArquivo(outputBuilder.ToString(), "01-RAW.txt");
-        aux.ExibirSobrecusto("Análise RAW", totalInstrucoes, 0);
+
+        int totalInstrucoes = blocos.Sum(b => b.Count);
+        int totalDependencias = blocos.Sum(bloco =>
+        {
+            var dependencias = 0;
+            for (int j = 0; j < bloco.Count - 1; j++)
+            {
+                var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
+                // Verificar apenas a próxima instrução para o total de dependências
+                if (j + 1 < bloco.Count)
+                {
+                    var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
+                    if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd)
+                    {
+                        dependencias++;
+                    }
+                }
+            }
+            return dependencias;
+        });
+
+        aux.ExibirSobrecusto("RAW Hazards", totalInstrucoes, totalDependencias);
     }
 
     // Analisa hazards sem utilizar forwarding
