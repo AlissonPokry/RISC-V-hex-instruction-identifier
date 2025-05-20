@@ -320,44 +320,68 @@ public class HazardAnalysis
         var outputBuilder = resultado.Value.outputBuilder;
         var blocos = resultado.Value.blocos;
 
+        // Analisar cada bloco
         for (int i = 0; i < blocos.Count; i++)
         {
             outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
             var bloco = blocos[i];
+            var novaSequencia = new List<(string hex, string assembly, bool isNop)>();
 
-            var novaSequencia = aux.InserirNOPs(
-                bloco,
-                instrucao => {
-                    int posicao = bloco.IndexOf(instrucao.hex);
-                    if (posicao + 1 >= bloco.Count) return false;
-                    var proximaInstrucao = aux.AnalisarInstrucao(bloco[posicao + 1]);
-                    bool isLoad = instrucao.assembly.StartsWith("l");
-                    return (proximaInstrucao.rs1 == instrucao.rd || proximaInstrucao.rs2 == instrucao.rd) && isLoad;
-                },
-                instrucao => 1, // Sempre 1 NOP para load-use hazards com forwarding
-                instrucao => $"(NOP) -> Aguardando load para x{instrucao.rd} ficar disponível"
-            );
+            for (int j = 0; j < bloco.Count; j++)
+            {
+                try
+                {
+                    var instrucaoAtual = string.Concat(bloco[j].Select(c => aux.ConverterHexParaBinario(char.ToUpper(c))));
+                    var camposAtual = aux.SepararCamposInstrucao(instrucaoAtual);
+                    var instrucaoAssemblyAtual = aux.IdentificarInstrucaoAssembly(camposAtual.opcode, camposAtual.funct3, camposAtual.funct7);
+                    int rdAtual = Convert.ToInt32(camposAtual.rd, 2);
+
+                    novaSequencia.Add((bloco[j], instrucaoAssemblyAtual, false));
+
+                    if (j + 1 < bloco.Count)
+                    {
+                        var instrucaoSeguinte = string.Concat(bloco[j + 1].Select(c => aux.ConverterHexParaBinario(char.ToUpper(c))));
+                        var camposSeguinte = aux.SepararCamposInstrucao(instrucaoSeguinte);
+                        int rs1Seguinte = Convert.ToInt32(camposSeguinte.rs1, 2);
+                        int rs2Seguinte = Convert.ToInt32(camposSeguinte.rs2, 2);
+
+                        bool isLoad = instrucaoAssemblyAtual.StartsWith("l");
+
+                        if (rs1Seguinte == rdAtual || rs2Seguinte == rdAtual)
+                        {
+                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 1/2)", true));
+                            novaSequencia.Add(("00000000", $"(NOP) -> {instrucaoAssemblyAtual} ainda não escreveu x{rdAtual} na ALU (ciclo 2/2)", true));
+                        }
+                    }
+                }
+                catch (Exception)
+                {
+                    outputBuilder.AppendLine($"Erro ao analisar instrução {j + 1}");
+                }
+            }
 
             // Exibe a sequência original
-            aux.ExibirSequenciaOriginal(bloco, outputBuilder);
+            outputBuilder.AppendLine("Sequência original:");
+            for (int j = 0; j < bloco.Count; j++)
+            {
+                var (_, assembly, _, _, _) = aux.AnalisarInstrucao(bloco[j]);
+                outputBuilder.AppendLine($"  {j + 1}. {bloco[j]} ({assembly})");
+            }
 
             // Exibe a sequência com Forwarding + NOPs
             outputBuilder.AppendLine("\nSequência com Forwarding + NOPs:");
             for (int j = 0; j < novaSequencia.Count; j++)
             {
                 var (hex, assembly, isNop) = novaSequencia[j];
-                int posOriginal = isNop ? -1 : bloco.IndexOf(hex);
                 if (isNop)
                 {
                     outputBuilder.AppendLine($"  {j + 1}. {hex} {assembly}");
                 }
                 else
                 {
-                    var indicadorReordenacao = posOriginal != j ? $" -> [Movida da posição {posOriginal + 1}]" : "";
-                    outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly}){indicadorReordenacao}");
+                    outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly})");
                 }
             }
-
             outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {novaSequencia.Count(x => x.isNop)}");
             outputBuilder.AppendLine();
         }
@@ -585,40 +609,90 @@ public class HazardAnalysis
         var outputBuilder = resultado.Value.outputBuilder;
         var blocos = resultado.Value.blocos;
 
+        // Analisar cada bloco
         for (int i = 0; i < blocos.Count; i++)
         {
             outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
             var bloco = blocos[i];
+            var novaSequencia = new List<(string hex, string assembly, string comentario)>();
 
-            var novaSequencia = aux.InserirNOPs(
-                bloco,
-                instrucao => {
-                    int posicao = bloco.IndexOf(instrucao.hex);
-                    if (!instrucao.assembly.StartsWith("b") && !instrucao.assembly.StartsWith("j")) 
-                        return false;
-                    if (posicao + 1 >= bloco.Count) 
-                        return true;
-                    var proximaInstrucao = aux.AnalisarInstrucao(bloco[posicao + 1]);
-                    return !aux.PodeExecutarNoSlotDeAtraso(instrucao, proximaInstrucao);
-                },
-                instrucao => 1, // Sempre 1 NOP para delayed branch
-                instrucao => "(NOP) -> Slot de atraso do branch/jump"
-            );
+            for (int j = 0; j < bloco.Count; j++)
+            {
+                try
+                {
+                    var (hex, assembly, rd, rs1, rs2) = aux.AnalisarInstrucao(bloco[j]);
+                    bool isBranch = assembly.StartsWith("b");
+                    bool isJump = assembly.StartsWith("j");
+
+                    if (isBranch || isJump)
+                    {
+                        novaSequencia.Add((hex, assembly, "Instrução de desvio"));
+
+                        // Tenta encontrar uma instrução independente nas próximas instruções
+                        bool encontrouIndependente = false;
+                        if (j + 1 < bloco.Count)
+                        {
+                            var (nextHex, nextAssembly, nextRd, nextRs1, nextRs2) = aux.AnalisarInstrucao(bloco[j + 1]);
+
+                            // Verifica se a próxima instrução é independente do branch/jump
+                            bool isDependente = nextRs1 == rd || nextRs2 == rd;
+
+                            if (!isDependente)
+                            {
+                                novaSequencia.Add((nextHex, nextAssembly, "Instrução independente movida para slot de atraso"));
+                                j++; // Pula a próxima instrução já que foi movida
+                                encontrouIndependente = true;
+                            }
+                        }
+
+                        if (!encontrouIndependente)
+                        {
+                            novaSequencia.Add(("00000000", "nop", "NOP inserido no slot de atraso do branch/jump"));
+                        }
+                    }
+                    else
+                    {
+                        novaSequencia.Add((hex, assembly, ""));
+                    }
+                }
+                catch (Exception)
+                {
+                    outputBuilder.AppendLine($"Erro ao analisar instrução {j + 1}");
+                }
+            }
 
             // Exibe a sequência original
-            aux.ExibirSequenciaOriginal(bloco, outputBuilder);
+            outputBuilder.AppendLine("Sequência original:");
+            for (int j = 0; j < bloco.Count; j++)
+            {
+                var (_, assembly, _, _, _) = aux.AnalisarInstrucao(bloco[j]);
+                outputBuilder.AppendLine($"  {j + 1}. {bloco[j]} ({assembly})");
+            }
 
             // Exibe a sequência com delayed branch
             outputBuilder.AppendLine("\nSequência com Delayed Branch:");
             for (int j = 0; j < novaSequencia.Count; j++)
             {
-                var (hex, assembly, isNop) = novaSequencia[j];
-                outputBuilder.AppendLine($"  {j + 1}. {hex} {(isNop ? assembly : $"({assembly})")}");
+                var (hex, assembly, comentario) = novaSequencia[j];
+                if (comentario != "")
+                {
+                    outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly}) -> {comentario}");
+                }
+                else
+                {
+                    outputBuilder.AppendLine($"  {j + 1}. {hex} ({assembly})");
+                }
             }
 
-            outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {novaSequencia.Count(x => x.isNop)}");
+            var nopsInseridos = novaSequencia.Count(x => x.assembly == "nop");
+            var instrucoesMovidas = novaSequencia.Count(x => x.comentario.Contains("movida"));
+
+            outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {nopsInseridos}");
+            outputBuilder.AppendLine($"Total de instruções reordenadas: {instrucoesMovidas}");
             outputBuilder.AppendLine();
         }
+
+        aux.EscreverArquivo(outputBuilder.ToString(), "09-DelayedBranch.txt");
 
         int totalInstrucoes = blocos.Sum(b => b.Count);
         int totalNops = blocos.Sum(bloco =>
@@ -638,5 +712,4 @@ public class HazardAnalysis
 
         aux.ExibirSobrecusto("Com Delayed Branch", totalInstrucoes, totalNops);
     }
-
 }
