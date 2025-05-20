@@ -1,14 +1,14 @@
-using System.Text;
-
 // Classe responsável pela análise de diferentes tipos de hazards em instruções RISC-V
 public class HazardAnalysis
 {
+    // Instância auxiliar para funções de manipulação de instruções
     private readonly auxFunctions aux = new auxFunctions();
 
     // Detecta hazards do tipo Read After Write (RAW)
     // Identifica quando uma instrução tenta ler um registrador antes que seu valor seja escrito
     public void AnalisarRAWHazard(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "RAW Hazard");
         if (resultado == null) return;
 
@@ -36,6 +36,7 @@ public class HazardAnalysis
                     for (int k = j + 1; k < limite; k++)
                     {
                         var instrucaoFutura = aux.AnalisarInstrucao(bloco[k]);
+                        // Se a próxima instrução lê o registrador escrito pela atual, há dependência
                         if (instrucaoFutura.rs1 == rdAtual || instrucaoFutura.rs2 == rdAtual)
                         {
                             outputBuilder.AppendLine($"  Instrução {j + 1} ({instrucaoAtual.assembly}) escreve em x{rdAtual}");
@@ -56,6 +57,7 @@ public class HazardAnalysis
 
         aux.EscreverArquivo(outputBuilder.ToString(), "01-RAW.txt");
 
+        // Calcula o total de instruções e dependências para o resumo
         int totalInstrucoes = blocos.Sum(b => b.Count);
         int totalDependencias = blocos.Sum(bloco =>
         {
@@ -83,6 +85,7 @@ public class HazardAnalysis
     // Requer ciclos completos de espera entre instruções dependentes
     public void AnalisarHazardSemForwarding(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Sem Forwarding");
         if (resultado == null) return;
 
@@ -110,6 +113,7 @@ public class HazardAnalysis
                     for (int k = j + 1; k < limite; k++)
                     {
                         var instrucaoFutura = aux.AnalisarInstrucao(bloco[k]);
+                        // Se a próxima instrução lê o registrador escrito pela atual, há dependência
                         if (instrucaoFutura.rs1 == rdAtual || instrucaoFutura.rs2 == rdAtual)
                         {
                             outputBuilder.AppendLine($"  Instrução {j + 1} ({instrucaoAtual.assembly}) escreve em x{rdAtual}");
@@ -141,6 +145,7 @@ public class HazardAnalysis
                 if (j + 1 < bloco.Count)
                 {
                     var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
+                    // Se houver dependência, adiciona 2 ciclos de espera
                     if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd)
                     {
                         nops += 2; // 2 ciclos de espera necessários
@@ -154,9 +159,9 @@ public class HazardAnalysis
     }
 
     // Analisa hazards utilizando técnica de forwarding
-    // Permite reduzir ciclos de espera encaminhando resultados entre estágios do pipeline
     public void AnalisarHazardComForwarding(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding");
         if (resultado == null) return;
 
@@ -180,12 +185,14 @@ public class HazardAnalysis
                     int rdAtual = instrucaoAtual.rd;
                     bool isLoad = instrucaoAtual.assembly.StartsWith("l");
 
+                    // Verificar até 5 instruções à frente
                     int limite = Math.Min(j + 6, bloco.Count);
                     for (int k = j + 1; k < limite; k++)
                     {
                         var instrucaoFutura = aux.AnalisarInstrucao(bloco[k]);
                         bool isImmediate = k == j + 1;
 
+                        // Se a próxima instrução lê o registrador escrito pela atual, há dependência
                         if (instrucaoFutura.rs1 == rdAtual || instrucaoFutura.rs2 == rdAtual)
                         {
                             outputBuilder.AppendLine($"  Instrução {j + 1} ({instrucaoAtual.assembly}) escreve em x{rdAtual}");
@@ -224,6 +231,7 @@ public class HazardAnalysis
             for (int j = 0; j < bloco.Count - 1; j++)
             {
                 var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
+                // Apenas hazards do tipo load-use exigem 1 ciclo de espera; ALU-use são resolvidos por forwarding
                 if (instrucaoAtual.assembly.StartsWith("l") && j + 1 < bloco.Count)
                 {
                     var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
@@ -243,6 +251,7 @@ public class HazardAnalysis
     // Adiciona NOPs para garantir a correta execução das instruções dependentes
     public void AnalisarHazardComNOP(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com NOPs");
         if (resultado == null) return;
 
@@ -260,9 +269,10 @@ public class HazardAnalysis
                     int posicao = bloco.IndexOf(instrucao.hex);
                     if (posicao + 1 >= bloco.Count) return false;
                     var proximaInstrucao = aux.AnalisarInstrucao(bloco[posicao + 1]);
+                    // Verifica se há dependência com a próxima instrução
                     return proximaInstrucao.rs1 == instrucao.rd || proximaInstrucao.rs2 == instrucao.rd;
                 },
-                instrucao => instrucao.assembly.StartsWith("l") ? 1 : 2,
+                instrucao => instrucao.assembly.StartsWith("l") ? 1 : 2, // 1 ciclo para load-use, 2 ciclos para outros
                 instrucao => instrucao.assembly.StartsWith("l") 
                     ? $"(NOP) -> Load {instrucao.assembly} precisa de 1 ciclo para buscar x{instrucao.rd} da memória"
                     : $"(NOP) -> {instrucao.assembly} ainda não escreveu x{instrucao.rd} na ALU (ciclo {(instrucao.assembly.StartsWith("l") ? "1/1" : "1/2")})"
@@ -295,6 +305,7 @@ public class HazardAnalysis
                 if (j + 1 < bloco.Count)
                 {
                     var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
+                    // Insere 1 NOP para load-use e 2 NOPs para outros tipos de dependência
                     if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd)
                     {
                         nops += instrucaoAtual.assembly.StartsWith("l") ? 1 : 2;
@@ -314,6 +325,7 @@ public class HazardAnalysis
     // Usa forwarding quando possível e insere NOPs apenas quando necessário
     public void AnalisarHazardComForwardingENOP(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding + NOPs");
         if (resultado == null) return;
 
@@ -381,16 +393,13 @@ public class HazardAnalysis
             for (int j = 0; j < bloco.Count - 1; j++)
             {
                 var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
-                if (j + 1 < bloco.Count)
+                // Apenas hazards do tipo load-use exigem 1 ciclo de espera; ALU-use são resolvidos por forwarding
+                if (instrucaoAtual.assembly.StartsWith("l") && j + 1 < bloco.Count)
                 {
                     var instrucaoSeguinte = aux.AnalisarInstrucao(bloco[j + 1]);
-                    bool temDependencia = instrucaoSeguinte.rs1 == instrucaoAtual.rd || 
-                                        instrucaoSeguinte.rs2 == instrucaoAtual.rd;
-                    bool isLoad = instrucaoAtual.assembly.StartsWith("l");
-
-                    if (temDependencia && isLoad)
+                    if (instrucaoSeguinte.rs1 == instrucaoAtual.rd || instrucaoSeguinte.rs2 == instrucaoAtual.rd)
                     {
-                        nops++; // Apenas 1 NOP para load-use hazards
+                        nops++; // 1 ciclo apenas para load-use hazards
                     }
                 }
             }
@@ -405,6 +414,7 @@ public class HazardAnalysis
     // Tenta reorganizar a sequência de instruções para reduzir dependências
     public void AnalisarHazardComReordenacao(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Reordenação");
         if (resultado == null) return;
 
@@ -428,6 +438,7 @@ public class HazardAnalysis
                     int posicao = bloco.IndexOf(instrucao.hex);
                     if (posicao + 1 >= bloco.Count) return false;
                     var proximaInstrucao = aux.AnalisarInstrucao(bloco[posicao + 1]);
+                    // Verifica se há dependência com a próxima instrução
                     return proximaInstrucao.rs1 == instrucao.rd || proximaInstrucao.rs2 == instrucao.rd;
                 },
                 instrucao => 1,
@@ -470,6 +481,7 @@ public class HazardAnalysis
     // Utiliza ambas as técnicas para otimizar o pipeline e reduzir dependências
     public void AnalisarHazardComForwardingEReordenacao(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Forwarding + Reordenação");
         if (resultado == null) return;
 
@@ -494,6 +506,7 @@ public class HazardAnalysis
                     if (posicao + 1 >= bloco.Count) return false;
                     var proximaInstrucao = aux.AnalisarInstrucao(bloco[posicao + 1]);
                     bool isLoad = instrucao.assembly.StartsWith("l");
+                    // Verifica se há dependência com a próxima instrução e se é um hazard do tipo load-use
                     return (proximaInstrucao.rs1 == instrucao.rd || proximaInstrucao.rs2 == instrucao.rd) && isLoad;
                 },
                 instrucao => 1, // Sempre 1 NOP para load-use hazards com forwarding
@@ -536,6 +549,7 @@ public class HazardAnalysis
     // Insere NOPs para garantir correta execução de desvios
     public void AnalisarHazardDeControle(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Hazards de Controle");
         if (resultado == null) return;
 
@@ -550,7 +564,7 @@ public class HazardAnalysis
             var novaSequencia = aux.InserirNOPs(
                 bloco,
                 instrucao => instrucao.assembly.StartsWith("j") || instrucao.assembly.StartsWith("b"),
-                instrucao => instrucao.assembly.StartsWith("j") ? 1 : 2,
+                instrucao => instrucao.assembly.StartsWith("j") ? 1 : 2, // 1 NOP para jump, 2 NOPs para branch
                 instrucao => instrucao.assembly.StartsWith("j") 
                     ? "(NOP) -> Aguardando cálculo do endereço alvo do jump"
                     : instrucao.assembly.StartsWith("b") 
@@ -582,6 +596,7 @@ public class HazardAnalysis
             foreach (var linha in bloco)
             {
                 var instrucao = aux.AnalisarInstrucao(linha);
+                // Insere 1 NOP para jump e 2 NOPs para branch
                 if (instrucao.assembly.StartsWith("j")) nops += 1;
                 else if (instrucao.assembly.StartsWith("b")) nops += 2;
             }
@@ -595,56 +610,74 @@ public class HazardAnalysis
     // Tenta preencher o slot de atraso com instruções úteis ou NOPs
     public void AnalisarHazardComDelayedBranch(string caminhoArquivo)
     {
+        // Inicializa arquivo de saída e separa blocos
         var resultado = aux.InicializarArquivo(caminhoArquivo, "Com Delayed Branch");
         if (resultado == null) return;
 
         var outputBuilder = resultado.Value.outputBuilder;
         var blocos = resultado.Value.blocos;
 
-        // Analisar cada bloco
+        int totalInstrucoes = 0;
+        int totalNopsInseridos = 0;
+
         for (int i = 0; i < blocos.Count; i++)
         {
             outputBuilder.AppendLine($"\n=== Bloco {i + 1} ===");
             var bloco = blocos[i];
             var novaSequencia = new List<(string hex, string assembly, string comentario)>();
+            var registradoresEmUso = new HashSet<int>();
+            
+            totalInstrucoes += bloco.Count;
+            int nopsBloco = 0;
 
             for (int j = 0; j < bloco.Count; j++)
             {
                 try
                 {
-                    var (hex, assembly, rd, rs1, rs2) = aux.AnalisarInstrucao(bloco[j]);
-                    bool isBranch = assembly.StartsWith("b");
-                    bool isJump = assembly.StartsWith("j");
+                    var instrucaoAtual = aux.AnalisarInstrucao(bloco[j]);
+                    bool isBranch = instrucaoAtual.assembly.StartsWith("b");
+                    bool isJump = instrucaoAtual.assembly.StartsWith("j");
 
                     if (isBranch || isJump)
                     {
-                        novaSequencia.Add((hex, assembly, "Instrução de desvio"));
+                        novaSequencia.Add((bloco[j], instrucaoAtual.assembly, "Instrução de desvio"));
+                        registradoresEmUso.Add(instrucaoAtual.rd);
 
-                        // Tenta encontrar uma instrução independente nas próximas instruções
-                        bool encontrouIndependente = false;
-                        if (j + 1 < bloco.Count)
+                        // Procura instrução independente para o slot de atraso
+                        bool preencheuSlot = false;
+                        for (int k = j + 1; k < Math.Min(j + 3, bloco.Count); k++)
                         {
-                            var (nextHex, nextAssembly, nextRd, nextRs1, nextRs2) = aux.AnalisarInstrucao(bloco[j + 1]);
+                            var candidata = aux.AnalisarInstrucao(bloco[k]);
+                            
+                            // Verifica múltiplos tipos de dependências
+                            bool temDependencia = registradoresEmUso.Contains(candidata.rs1) ||
+                                               registradoresEmUso.Contains(candidata.rs2) ||
+                                               candidata.assembly.StartsWith("b") ||
+                                               candidata.assembly.StartsWith("j") ||
+                                               candidata.assembly.StartsWith("l") ||
+                                               candidata.assembly.StartsWith("s");
 
-                            // Verifica se a próxima instrução é independente do branch/jump
-                            bool isDependente = nextRs1 == rd || nextRs2 == rd;
-
-                            if (!isDependente)
+                            if (!temDependencia)
                             {
-                                novaSequencia.Add((nextHex, nextAssembly, "Instrução independente movida para slot de atraso"));
-                                j++; // Pula a próxima instrução já que foi movida
-                                encontrouIndependente = true;
+                                novaSequencia.Add((bloco[k], candidata.assembly, 
+                                    "Instrução independente movida para slot de atraso"));
+                                registradoresEmUso.Add(candidata.rd);
+                                preencheuSlot = true;
+                                j = k;  // Atualiza o índice
+                                break;
                             }
                         }
 
-                        if (!encontrouIndependente)
+                        if (!preencheuSlot)
                         {
-                            novaSequencia.Add(("00000000", "nop", "NOP inserido no slot de atraso do branch/jump"));
+                            novaSequencia.Add(("00000000", "nop", 
+                                "NOP inserido no slot de atraso"));
                         }
                     }
                     else
                     {
-                        novaSequencia.Add((hex, assembly, ""));
+                        novaSequencia.Add((bloco[j], instrucaoAtual.assembly, ""));
+                        registradoresEmUso.Add(instrucaoAtual.rd);
                     }
                 }
                 catch (Exception)
@@ -676,32 +709,17 @@ public class HazardAnalysis
                 }
             }
 
-            var nopsInseridos = novaSequencia.Count(x => x.assembly == "nop");
+            nopsBloco = novaSequencia.Count(x => x.assembly == "nop");
+            totalNopsInseridos += nopsBloco;
+
             var instrucoesMovidas = novaSequencia.Count(x => x.comentario.Contains("movida"));
 
-            outputBuilder.AppendLine($"\nTotal de NOPs inseridos: {nopsInseridos}");
-            outputBuilder.AppendLine($"Total de instruções reordenadas: {instrucoesMovidas}");
+            outputBuilder.AppendLine($"\nTotal de NOPs inseridos no bloco: {nopsBloco}");
+            outputBuilder.AppendLine($"Total de instruções reordenadas no bloco: {instrucoesMovidas}");
             outputBuilder.AppendLine();
         }
 
         aux.EscreverArquivo(outputBuilder.ToString(), "09-DelayedBranch.txt");
-
-        int totalInstrucoes = blocos.Sum(b => b.Count);
-        int totalNops = blocos.Sum(bloco =>
-        {
-            var nops = 0;
-            for (int j = 0; j < bloco.Count; j++)
-            {
-                var instrucao = aux.AnalisarInstrucao(bloco[j]);
-                if ((instrucao.assembly.StartsWith("b") || instrucao.assembly.StartsWith("j")) &&
-                    (j + 1 >= bloco.Count || !aux.PodeExecutarNoSlotDeAtraso(instrucao, aux.AnalisarInstrucao(bloco[j + 1]))))
-                {
-                    nops++;
-                }
-            }
-            return nops;
-        });
-
-        aux.ExibirSobrecusto("Com Delayed Branch", totalInstrucoes, totalNops);
+        aux.ExibirSobrecusto("Com Delayed Branch", totalInstrucoes, totalNopsInseridos);
     }
 }

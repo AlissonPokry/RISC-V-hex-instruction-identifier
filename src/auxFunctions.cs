@@ -2,10 +2,13 @@ using System.Text;
 
 public class auxFunctions
 {
+    // Mensagem padrão para erro de opcode
     const string MENSAGEM_ERRO = "Opcode inválido ou não encontrado.";
 
+    // Converte um caractere hexadecimal em sua representação binária de 4 bits
     public string ConverterHexParaBinario(char caractere)
     {
+        // Utiliza switch expression para mapear cada caractere
         return caractere switch
         {
             '0' => "0000",
@@ -29,8 +32,10 @@ public class auxFunctions
         };
     }
 
+    // Retorna o tipo da instrução a partir do opcode
     public string ObterTipoInstrucao(string opcode)
     {
+        // Mapeia opcodes para tipos de instrução RISC-V
         return opcode switch
         {
             "0110011" => "R-Type",
@@ -48,8 +53,10 @@ public class auxFunctions
         };
     }
 
+    // Identifica a instrução assembly a partir dos campos opcode, funct3 e funct7
     public string IdentificarInstrucaoAssembly(string opcode, string funct3, string funct7)
     {
+        // Utiliza pattern matching para identificar instruções
         return (opcode, funct3, funct7) switch
         {
             // Instruções tipo R
@@ -98,11 +105,15 @@ public class auxFunctions
             // Instruções tipo U
             ("0110111", _, _) => "lui",
             ("0010111", _, _) => "auipc",
+            
+            // Instruções tipo J
+            ("1101111", _, _) => "jal",
 
             _ => "Instrução não identificada"
         };
     }
 
+    // Separa os campos de uma instrução binária de 32 bits
     public (string opcode, string rd, string funct3, string rs1, string rs2, string funct7) SepararCamposInstrucao(string binario)
     {
         if (binario.Length != 32)
@@ -110,7 +121,7 @@ public class auxFunctions
             throw new ArgumentException("A instrução deve ter 32 bits");
         }
 
-        // Corrigindo os índices para extrair os campos corretamente
+        // Extrai os campos conforme o formato RISC-V
         string opcode = binario.Substring(25, 7);   // bits 6-0
         string rd = binario.Substring(20, 5);       // bits 11-7
         string funct3 = binario.Substring(17, 3);   // bits 14-12
@@ -121,13 +132,13 @@ public class auxFunctions
         return (opcode, rd, funct3, rs1, rs2, funct7);
     }
 
-    // Função para exibir o resultado da conversão e identificação
+    // Exibe o resultado da conversão e identificação da instrução
     public void ExibirResultado(string hex, string binario, string tipo, string assembly = "")
     {
         Console.WriteLine($"Hexadecimal: {hex} -> Binário: {binario} -> Tipo: {tipo} -> Assembly: {assembly}");
     }
 
-    // Função para exibir o resumo das instruções identificadas
+    // Exibe o resumo das instruções identificadas em um bloco
     public void ExibirResumo(Dictionary<string, int> contador)
     {
         Console.WriteLine("\nResumo das instruções:");
@@ -135,6 +146,7 @@ public class auxFunctions
         Console.WriteLine($"B-Type: {contador["B-Type"]}  J-Type: {contador["J-Type"]}  U-Type: {contador["U-Type"]}");
     }
 
+    // Lê um arquivo de instruções hexadecimais, identifica e exibe informações sobre cada instrução
     public void IdentificarInstrucoesBinarias(string caminhoArquivo)
     {
         if (!File.Exists(caminhoArquivo))
@@ -143,6 +155,7 @@ public class auxFunctions
             return;
         }
 
+        // Inicializa o contador de tipos de instrução
         var contadorInstrucoes = new Dictionary<string, int> {
         { "R-Type", 0 },
         { "I-Type", 0 },
@@ -211,6 +224,7 @@ public class auxFunctions
         }
     }
 
+    // Escreve o conteúdo em um arquivo, criando a pasta se necessário
     public void EscreverArquivo(string conteudo, string nomeArquivo, string pasta = "outputs")
     {
         try
@@ -233,6 +247,7 @@ public class auxFunctions
         }
     }
 
+    // Separa as linhas do arquivo em blocos (separados por linhas em branco)
     public List<List<string>> SepararEmBlocos(string caminhoArquivo)
     {
         if (!File.Exists(caminhoArquivo))
@@ -266,6 +281,7 @@ public class auxFunctions
         return blocos;
     }
 
+    // Exibe a sequência original de instruções de um bloco
     public void ExibirSequenciaOriginal(List<string> bloco, StringBuilder outputBuilder)
     {
         outputBuilder.AppendLine("Sequência original:");
@@ -277,6 +293,7 @@ public class auxFunctions
         outputBuilder.AppendLine();
     }
 
+    // Exibe o sobrecusto (percentual de NOPs) para determinada técnica
     public void ExibirSobrecusto(string titulo, int totalInstrucoes, int totalNops, int? instrucoesReordenadas = null)
     {
         Console.WriteLine($"\n=== Sobrecusto {titulo} ===");
@@ -289,6 +306,7 @@ public class auxFunctions
         Console.WriteLine($"Sobrecusto: {(double)totalNops / totalInstrucoes * 100:F1}%");
     }
 
+    // Analisa uma instrução hexadecimal e retorna informações relevantes
     public (string hex, string assembly, int rd, int rs1, int rs2) AnalisarInstrucao(string instrucaoHex)
     {
         var instrucaoBinaria = string.Concat(instrucaoHex.Select(c => ConverterHexParaBinario(char.ToUpper(c))));
@@ -301,13 +319,16 @@ public class auxFunctions
         return (instrucaoHex, assembly, rd, rs1, rs2);
     }
 
+    // Verifica se uma instrução pode ser executada no slot de atraso de um branch
     public bool PodeExecutarNoSlotDeAtraso((string hex, string assembly, int rd, int rs1, int rs2) branch,
                            (string hex, string assembly, int rd, int rs1, int rs2) proxima)
     {
+        // Não pode ser branch/jump e não pode depender do resultado do branch
         return !proxima.assembly.StartsWith("b") && !proxima.assembly.StartsWith("j") && 
                proxima.rs1 != branch.rd && proxima.rs2 != branch.rd;
     }
 
+    // Analisa dependências de registradores de uma instrução
     public (string assembly, int rd, int[] rs) AnalisarDependencias(string instrucaoHex)
     {
         var instrucaoBin = string.Concat(instrucaoHex.Select(c => ConverterHexParaBinario(char.ToUpper(c))));
@@ -321,6 +342,7 @@ public class auxFunctions
         return (assembly, rd, rs);
     }
 
+    // Inicializa o arquivo de saída e separa os blocos do arquivo de entrada
     public (StringBuilder outputBuilder, List<List<string>> blocos)? InicializarArquivo(string caminhoArquivo, string titulo)
     {
         if (!File.Exists(caminhoArquivo))
@@ -338,20 +360,7 @@ public class auxFunctions
         return (outputBuilder, blocos);
     }
 
-    public void ReportarHazardRAW(StringBuilder sb, int posAtual, string instrAtual, int rd,
-        string instrSeguinte, int[] rsSeguinte, bool[] hazards)
-    {
-        if (hazards.Any(h => h))
-        {
-            sb.AppendLine($"RAW Hazard detectado:");
-            sb.AppendLine($"  Instrução {posAtual} ({instrAtual}) escreve em x{rd}");
-            sb.AppendLine($"  Instrução {posAtual + 1} ({instrSeguinte}) lê " +
-                (hazards[0] ? $"RS1 (x{rsSeguinte[0]})" : "") +
-                (hazards[1] ? $"{(hazards[0] ? " e " : "")}RS2 (x{rsSeguinte[1]})" : ""));
-            sb.AppendLine();
-        }
-    }
-
+    // Exibe a sequência original e a nova sequência (modificada) de instruções
     public void ExibirSequencias(StringBuilder outputBuilder, List<string> bloco,
         IEnumerable<(string hex, string assembly, string comentario)> novaSequencia)
     {
@@ -371,6 +380,7 @@ public class auxFunctions
         }
     }
     
+    // Processa instruções de um bloco, inserindo NOPs conforme dependências detectadas
     public List<(string hex, string assembly, string comentario)> ProcessarInstrucoes(
         List<string> bloco, Func<(string hex, string assembly, int rd, int rs1, int rs2), int, bool> avaliarDependencia)
     {
@@ -405,6 +415,7 @@ public class auxFunctions
         return resultado;
     }
 
+    // Insere NOPs em uma sequência de instruções conforme funções de dependência e quantidade de NOPs
     public List<(string hex, string assembly, bool isNop)> InserirNOPs(
         List<string> bloco, 
         Func<(string hex, string assembly, int rd, int rs1, int rs2), bool> precisaNop,
