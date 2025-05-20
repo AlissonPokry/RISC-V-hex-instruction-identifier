@@ -406,6 +406,8 @@ public class HazardAnalysis
             return nops;
         });
 
+        aux.EscreverArquivo(outputBuilder.ToString(), "05-ComForwardingENOPs.txt");
+
         aux.ExibirSobrecusto("Com Forwarding + NOPs", totalInstrucoes, totalNops);
     }
 
