@@ -10,18 +10,18 @@ Sequência original:
   6. 01498333 (add)
   7. 40628433 (sub)
 
+
 Sequência reordenada (com NOPs quando necessário):
   1. 00400493 (addi)
   2. 00300193 (addi)
   3. 00200993 (addi)
   4. 00100A13 (addi)
-  5. 40628433 (sub) -> [Movida da posição 7]
-  6. 00000000 (NOP) -> Aguardando x9,x18 ficar disponível
-  7. 012482B3 (add) -> [Movida da posição 5]
-  8. 00000000 (NOP) -> Aguardando x19,x20 ficar disponível
-  9. 01498333 (add) -> [Movida da posição 6]
+  5. 012482B3 (add)
+  6. 01498333 (add)
+  7. 00000000 (NOP) -> Aguardando x6 ficar disponível
+  8. 40628433 (sub) -> [Movida da posição 7]
 
-Total de NOPs inseridos: 2
+Total de NOPs inseridos: 1
 
 
 === Bloco 2 ===
@@ -33,16 +33,17 @@ Sequência original:
   5. 005902b3 (add)
   6. 0259a823 (sw)
 
+
 Sequência reordenada (com NOPs quando necessário):
   1. 00100913 (addi)
   2. 0fc10997 (auipc)
-  3. 00000000 (NOP) -> Aguardando x19,x28 ficar disponível
+  3. 00000000 (NOP) -> Aguardando x19 ficar disponível
   4. ffc98993 (addi) -> [Movida da posição 3]
-  5. 00000000 (NOP) -> Aguardando x19,x0 ficar disponível
+  5. 00000000 (NOP) -> Aguardando x19 ficar disponível
   6. 0209a283 (lw) -> [Movida da posição 4]
-  7. 00000000 (NOP) -> Aguardando x18,x5 ficar disponível
+  7. 00000000 (NOP) -> Aguardando x5 ficar disponível
   8. 005902b3 (add) -> [Movida da posição 5]
-  9. 00000000 (NOP) -> Aguardando x19,x5 ficar disponível
+  9. 00000000 (NOP) -> Aguardando x5 ficar disponível
   10. 0259a823 (sw) -> [Movida da posição 6]
 
 Total de NOPs inseridos: 4
@@ -59,18 +60,18 @@ Sequência original:
   7. 01248433 (add)
   8. 41340433 (sub)
 
+
 Sequência reordenada (com NOPs quando necessário):
   1. 00f00413 (addi)
   2. 00a00493 (addi)
   3. 01400913 (addi)
   4. 00100993 (addi)
   5. 00200a13 (addi)
-  6. 00000000 (NOP) -> Aguardando x19,x20 ficar disponível
+  6. 00000000 (NOP) -> Aguardando x20 ficar disponível
   7. 01498463 (beq) -> [Movida da posição 6]
-  8. 00000000 (NOP) -> Aguardando x9,x18 ficar disponível
-  9. 01248433 (add) -> [Movida da posição 7]
-  10. 00000000 (NOP) -> Aguardando x8,x19 ficar disponível
-  11. 41340433 (sub) -> [Movida da posição 8]
+  8. 01248433 (add) -> [Movida da posição 7]
+  9. 00000000 (NOP) -> Aguardando x8 ficar disponível
+  10. 41340433 (sub) -> [Movida da posição 8]
 
-Total de NOPs inseridos: 3
+Total de NOPs inseridos: 2
 

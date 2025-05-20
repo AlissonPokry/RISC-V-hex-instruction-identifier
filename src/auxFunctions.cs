@@ -302,10 +302,10 @@ public class auxFunctions
     }
 
     public bool PodeExecutarNoSlotDeAtraso((string hex, string assembly, int rd, int rs1, int rs2) branch,
-                               (string hex, string assembly, int rd, int rs1, int rs2) proxima)
+                           (string hex, string assembly, int rd, int rs1, int rs2) proxima)
     {
-        // Verifica se a próxima instrução não depende do branch
-        return proxima.rs1 != branch.rd && proxima.rs2 != branch.rd;
+        return !proxima.assembly.StartsWith("b") && !proxima.assembly.StartsWith("j") && 
+               proxima.rs1 != branch.rd && proxima.rs2 != branch.rd;
     }
 
     public (string assembly, int rd, int[] rs) AnalisarDependencias(string instrucaoHex)
@@ -351,14 +351,86 @@ public class auxFunctions
             sb.AppendLine();
         }
     }
-    
-    public (StringBuilder outputBuilder, List<List<string>> blocos, int totalInstrucoes) InitializeAnalysis(
-        string caminhoArquivo, string titulo)
+
+    public void ExibirSequencias(StringBuilder outputBuilder, List<string> bloco,
+        IEnumerable<(string hex, string assembly, string comentario)> novaSequencia)
     {
-        var outputBuilder = new StringBuilder();
-        outputBuilder.AppendLine($"====={titulo}=====");
-        var blocos = SepararEmBlocos(caminhoArquivo);
-        var totalInstrucoes = blocos.Sum(b => b.Count);
-        return (outputBuilder, blocos, totalInstrucoes);
+        // Exibe sequência original
+        ExibirSequenciaOriginal(bloco, outputBuilder);
+
+        // Exibe nova sequência
+        outputBuilder.AppendLine("\nSequência modificada:");
+        int i = 1;
+        foreach (var (hex, assembly, comentario) in novaSequencia)
+        {
+            var linha = comentario.Length > 0
+                ? $"  {i}. {hex} ({assembly}) -> {comentario}"
+                : $"  {i}. {hex} ({assembly})";
+            outputBuilder.AppendLine(linha);
+            i++;
+        }
+    }
+    
+    public List<(string hex, string assembly, string comentario)> ProcessarInstrucoes(
+        List<string> bloco, Func<(string hex, string assembly, int rd, int rs1, int rs2), int, bool> avaliarDependencia)
+    {
+        var resultado = new List<(string hex, string assembly, string comentario)>();
+        
+        for (int j = 0; j < bloco.Count; j++)
+        {
+            try
+            {
+                var instrucao = AnalisarInstrucao(bloco[j]);
+                resultado.Add((instrucao.hex, instrucao.assembly, ""));
+
+                if (avaliarDependencia(instrucao, j))
+                {
+                    if (instrucao.assembly.StartsWith("l"))
+                    {
+                        resultado.Add(("00000000", "nop", "Load-use hazard"));
+                    }
+                    else
+                    {
+                        resultado.Add(("00000000", "nop", "Ciclo de espera 1/2"));
+                        resultado.Add(("00000000", "nop", "Ciclo de espera 2/2"));
+                    }
+                }
+            }
+            catch
+            {
+                resultado.Add((bloco[j], "erro", "Falha ao analisar instrução"));
+            }
+        }
+
+        return resultado;
+    }
+
+    public List<(string hex, string assembly, bool isNop)> InserirNOPs(
+        List<string> bloco, 
+        Func<(string hex, string assembly, int rd, int rs1, int rs2), bool> precisaNop,
+        Func<(string hex, string assembly, int rd, int rs1, int rs2), int> quantidadeNops,
+        Func<(string hex, string assembly, int rd, int rs1, int rs2), string> mensagemNop)
+    {
+        var resultado = new List<(string hex, string assembly, bool isNop)>();
+        
+        for (int j = 0; j < bloco.Count; j++)
+        {
+            var instrucaoAtual = AnalisarInstrucao(bloco[j]);
+            resultado.Add((bloco[j], instrucaoAtual.assembly, false));
+
+            if (j < bloco.Count - 1)
+            {
+                if (precisaNop(instrucaoAtual))
+                {
+                    int nops = quantidadeNops(instrucaoAtual);
+                    for (int n = 0; n < nops; n++)
+                    {
+                        resultado.Add(("00000000", mensagemNop(instrucaoAtual), true));
+                    }
+                }
+            }
+        }
+        
+        return resultado;
     }
 }

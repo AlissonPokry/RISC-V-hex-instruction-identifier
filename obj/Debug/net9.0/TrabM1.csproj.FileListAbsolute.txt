@@ -57,3 +57,18 @@ C:\Users\Alisson\OneDrive\Desktop\Faculdade\7 período\Organização de computad
 C:\Users\Alisson\OneDrive\Desktop\Faculdade\7 período\Organização de computadores\TrabalhoM2\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.pdb
 C:\Users\Alisson\OneDrive\Desktop\Faculdade\7 período\Organização de computadores\TrabalhoM2\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.genruntimeconfig.cache
 C:\Users\Alisson\OneDrive\Desktop\Faculdade\7 período\Organização de computadores\TrabalhoM2\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\ref\TrabM1.dll
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\bin\Debug\net9.0\TrabM1.exe
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\bin\Debug\net9.0\TrabM1.deps.json
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\bin\Debug\net9.0\TrabM1.runtimeconfig.json
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\bin\Debug\net9.0\TrabM1.dll
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\bin\Debug\net9.0\TrabM1.pdb
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.AssemblyInfoInputs.cache
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.AssemblyInfo.cs
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.csproj.CoreCompileInputs.cache
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.sourcelink.json
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.dll
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\refint\TrabM1.dll
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.pdb
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\TrabM1.genruntimeconfig.cache
+C:\Users\CFA02\Desktop\Alisson\Trabalho M2-Org\RISC-V-hex-instruction-identifier\obj\Debug\net9.0\ref\TrabM1.dll

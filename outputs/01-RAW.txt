@@ -10,6 +10,7 @@ Sequência original:
   6. 01498333 (add)
   7. 40628433 (sub)
 
+
 Sequência modificada:
   1. 00400493 (addi)
   2. 00300193 (addi)
@@ -29,6 +30,7 @@ Sequência original:
   4. 0209a283 (lw)
   5. 005902b3 (add)
   6. 0259a823 (sw)
+
 
 Sequência modificada:
   1. 00100913 (addi)
@@ -55,6 +57,7 @@ Sequência original:
   6. 01498463 (beq)
   7. 01248433 (add)
   8. 41340433 (sub)
+
 
 Sequência modificada:
   1. 00f00413 (addi)
